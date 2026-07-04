@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.example.workspacepeek</string>
+    <key>CFBundleName</key>
+    <string>WorkspacePeek</string>
+    <key>CFBundleDisplayName</key>
+    <string>WorkspacePeek</string>
+    <key>CFBundleExecutable</key>
+    <string>WorkspacePeek</string>
+    <key>CFBundleIconFile</key>
+    <string></string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>WorkspacePeek captures workspace thumbnails for the workspace switcher.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>WorkspacePeek needs accessibility access to listen for the global hotkey.</string>
+</dict>
+</plist>
