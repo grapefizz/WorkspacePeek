@@ -14,23 +14,25 @@ struct Workspace: Identifiable, Equatable {
 
 final class AerospaceClient {
 
-    static let binaryPath: String? = {
-        let candidates = ["/opt/homebrew/bin/aerospace", "/usr/local/bin/aerospace", "/usr/bin/aerospace"]
-        return candidates.first { FileManager.default.fileExists(atPath: $0) }
-    }()
+    static var binaryPath: String? {
+        WorkspacePeekConfig.current.windowManager.aerospaceBinaryCandidates
+            .map(WorkspacePeekConfig.expandPath)
+            .first { FileManager.default.fileExists(atPath: $0) }
+    }
 
     static func listWorkspaces() -> [Workspace] {
+        let cfg = WorkspacePeekConfig.current.windowManager
         let focus = focusedWorkspace()
 
-        let all = run(args: ["list-workspaces", "--all"])
+        let all = run(args: cfg.aerospaceListWorkspacesArguments)
             .components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
 
-        let windowOutput = run(args: ["list-windows", "--all", "--format", "%{workspace}|%{app-name}"])
+        let windowOutput = run(args: cfg.aerospaceListWindowsArguments)
         var appsByWorkspace: [String: [String]] = [:]
         for line in windowOutput.components(separatedBy: .newlines) {
-            let parts = line.components(separatedBy: "|")
+            let parts = line.components(separatedBy: cfg.aerospaceWindowSeparator)
             guard parts.count == 2 else { continue }
             let ws = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
             let app = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,19 +41,21 @@ final class AerospaceClient {
         }
 
         return all
-            .filter { appsByWorkspace[$0] != nil }
+            .filter { cfg.includeEmptyWorkspaces || appsByWorkspace[$0] != nil }
             .map { wsId in
                 Workspace(id: wsId, isFocused: wsId == focus, appNames: appsByWorkspace[wsId] ?? [])
             }
     }
 
     static func focusedWorkspace() -> String {
-        return run(args: ["list-workspaces", "--focused"])
+        let cfg = WorkspacePeekConfig.current.windowManager
+        return run(args: cfg.aerospaceFocusedWorkspaceArguments)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     static func switchTo(_ workspace: String) {
-        _ = run(args: ["workspace", workspace])
+        let cfg = WorkspacePeekConfig.current.windowManager
+        _ = run(args: cfg.aerospaceSwitchWorkspaceArguments.replacingPlaceholders(["workspace": workspace]))
     }
 
     @discardableResult
@@ -72,17 +76,7 @@ final class AerospaceClient {
 // (Maps app names to Nerd Font glyphs to match sketchybar icons)
 enum AppGlyphMap {
     static func glyph(for appName: String) -> String {
-        switch appName {
-        case "WezTerm": return "\u{F018D}"
-        case "Zen": return "\u{F0239}"
-        case "Discord": return "\u{F066F}"
-        case "Anki": return "\u{F04CE}"
-        case "Finder": return "\u{F0036}"
-        case "Safari": return "\u{F0039}"
-        case "Notes": return "\u{F082E}"
-        case "Mail": return "\u{F01EE}"
-        case "System Settings": return "\u{F0493}"
-        default: return "\u{F0614}"
-        }
+        let cfg = WorkspacePeekConfig.current.glyphs
+        return cfg.appGlyphs[appName] ?? cfg.defaultGlyph
     }
 }

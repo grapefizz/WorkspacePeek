@@ -32,30 +32,13 @@ codesign --force --deep \
     --options runtime \
     "$APP_PATH"
 
-echo "==> Seeding tunable badge config..."
-BADGE_DIR="$HOME/.config/workspacepeek"
-mkdir -p "$BADGE_DIR"
-if [ ! -f "$BADGE_DIR/badge.json" ]; then
-cat > "$BADGE_DIR/badge.json" << 'JSON'
-{
-  "bubbleSize": 26,
-  "cornerRadius": 5,
-  "spacing": 5,
-  "fontSize": 15,
-  "glyphYOffset": 0,
-  "glyphXOffset": 0,
-  "insetX": 10,
-  "insetY": 10,
-  "selBorderWidth": 3,
-  "selGlowRadius": 12,
-  "selGlowOpacity": 0.9,
-  "titleText": "˚ ₊‧꒰ა  ✦ ˚  · ˚  workspaces  ˚ ·  ˚ ✦  ໒꒱ ‧₊˚",
-  "titleFontSize": 18,
-  "showTitle": true
-}
-JSON
+echo "==> Preparing config directory..."
+CONFIG_DIR="$HOME/.config/workspacepeek"
+mkdir -p "$CONFIG_DIR"
+if [ -f "$CONFIG_DIR/config.json" ]; then
+  echo "    (config.json exists - leaving your tuned values untouched)"
 else
-  echo "    (badge.json exists - leaving your tuned values untouched)"
+  echo "    (config.json will be created by WorkspacePeek on startup)"
 fi
 
 echo "==> Removing old launchd plist if present..."
@@ -79,4 +62,5 @@ echo "  On first launch, grant Accessibility + Screen Recording in"
 echo "  System Settings → Privacy & Security."
 echo ""
 echo "  The app registers itself as a Login Item automatically."
+echo "  Config: $CONFIG_DIR/config.json"
 echo "  To remove it: System Settings → General → Login Items"

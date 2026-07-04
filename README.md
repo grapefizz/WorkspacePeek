@@ -8,7 +8,7 @@ The flow is you would hit a hotkey --> horizontal strip of workspace thumbnails 
 
 ## How it works
 
-The thumbnails are screenshots taken w/ ScreenCaptureKit (`SCScreenshotManager.captureImage` over current display) to snapshot the screen whenever you pull up the swapper, then cache it as a PNG at `~/.cache/workspacepeek/<workspace-id>.png`. In other words, they are NOT live views of those workspaces like mission control (though I find it good enough for my purposes).
+The thumbnails are screenshots taken w/ ScreenCaptureKit (`SCScreenshotManager.captureImage` over current display) to snapshot the screen whenever you pull up the swapper, then cache it as a PNG at the configured cache path, which defaults to `~/.cache/workspacepeek/<workspace-id>.png`. In other words, they are NOT live views of those workspaces like mission control (though I find it good enough for my purposes).
 
 Pulling up the picker would therefore load those cached PNGs as the tiles, showing the last state you saw on that workspace. This is why the picker needs permissions for Screen Recording, and also why a workspace you haven't been to yet will also show up as blank until you visit it once. This is also why if you switch workspaces through other methods than WorkspacePeek, it will not reflect in the WorkspacePeek thumbnails.
 
@@ -34,45 +34,49 @@ On first launch macOS will prompt for:
 
 **Option + W**
 
-To change it, edit `Sources/WorkspacePeek/HotkeyListener.swift`:
+To change it, edit `~/.config/workspacepeek/config.json`. WorkspacePeek creates that file on startup if it does not exist.
 
-```swift
-private let triggerKeyCode: CGKeyCode = 0x0D  // W (change this)
-private let triggerModifiers: CGEventFlags = [.maskAlternate]  // Option (change this)
+```json
+{
+  "hotkey": {
+    "triggerKey": "w",
+    "triggerModifiers": ["option"],
+    "consumeEvent": true
+  }
+}
 ```
 
-Some common key codes (or you can look some up for yourself ofc):
-- A=0x00, S=0x01, D=0x02, F=0x03, W=0x0D, E=0x0E, R=0x0F
-- Space=0x31, Tab=0x30
+Use lowercase key names like `w`, `s`, `space`, `tab`, `return`, or `escape`.
 
 Modifier flags:
-- Option: `.maskAlternate`
-- Command: `.maskCommand`
-- Control: `.maskControl`
-- Shift: `.maskShift`
+- Option: `option`
+- Command: `command`
+- Control: `control`
+- Shift: `shift`
 
-After that re-run `./install.sh` to rebuild.
+Use `option`, `command`, `control`, and `shift` in the config. Restart WorkspacePeek after changing hotkey settings.
 
 ## Pywal integration
 
-Colours are read live from `~/.cache/wal/colors.json` every time the picker opens,
+Colours are read live from the configured pywal file every time the picker opens. The default is `~/.cache/wal/colors.json`,
 so it always matches your current wallpaper palette automatically.
 
 ## Customising it
 
-If you're not into my aesthetic titles (or just want to mess w/ the sizing), it's all in `~/.config/workspacepeek/badge.json`, which install.sh drops a default one of. It's read every time you open the picker so edits are live, no rebuild needed.
+Runtime settings live in `~/.config/workspacepeek/config.json`. The app creates a full default file on startup if none exists. Most HUD edits are read each time you open the picker, so sizing and colour tweaks do not need a rebuild.
 
-- The title (that `꒰ා ✦ ... workspaces ... ໒꒱` header) --> change `"titleText"`, or set `"showTitle": false` to just get rid of it.
-- Other stuff in there: bubble size, corner radius, spacing, font size, selection glow.
+- The title --> change `"hud.badge.titleText"`, or set `"hud.badge.showTitle": false` to hide it.
+- Hotkey, navigation keys, cache path, screenshot scale, backend selection, CLI paths, app glyphs, fonts, layout, fallback colours, and colour roles are all configurable there.
+- Set `"windowManager.backend"` to `"auto"`, `"rift"`, or `"aerospace"`.
 
 ### Colours
 
 Out of the box the HUD comes up pink, that's the built-in fallback palette. There's two ways to change it:
 
-- **The proper way (pywal):** the switcher reads `~/.cache/wal/colors.json` live on every open, so if you set pywal up and generate a scheme, it just follows your wallpaper. No rebuild needed.
-- **The quick way (hardcode it):** if you don't want pywal, edit the fallback hex values in `Sources/WorkspacePeek/WalColors.swift` (the `static var fallback` block) and re-run `./install.sh`. That becomes your permanent colour scheme.
+- **The proper way (pywal):** the switcher reads the configured pywal JSON live on every open, so if you set pywal up and generate a scheme, it just follows your wallpaper. No rebuild needed.
+- **The quick way:** if you don't want pywal, set `"colors.useWalColors": false` and edit the hex values under `"colors.fallback"` in `~/.config/workspacepeek/config.json`.
 
-Only change the bit inside the quotes (the `"#280d2a"` part), leave the `NSColor(hex:) ?? .black` stuff alone. Here's what each field actually paints in the switcher:
+Here's what each default colour role paints in the switcher:
 
 | What you see | Field |
 |---|---|
@@ -87,7 +91,7 @@ Only change the bit inside the quotes (the `"#280d2a"` part), leave the `NSColor
 | Selected window ring + glow | `color4` |
 | Other window rings | `color2` |
 
-So the big levers are `background` (the whole HUD), `color13` (the focused workspace bubble), and `color4` (the selection ring). If you fat-finger a hex it just falls back to the `.white` / `.black` after the `??`, so nothing breaks, you'll just see the wrong colour and know which line to fix.
+So the big levers are `background` (the whole HUD), `color13` (the focused workspace bubble), and `color4` (the selection ring). If you fat-finger a hex, WorkspacePeek falls back to a safe built-in colour for that field.
 
 ## Is this safe?
 

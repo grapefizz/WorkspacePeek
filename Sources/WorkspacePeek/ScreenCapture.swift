@@ -5,23 +5,31 @@ import UniformTypeIdentifiers
 
 final class WorkspaceCaptureEngine {
 
-    static let cacheDirectory: URL = {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let dir = home.appendingPathComponent(".cache/workspacepeek")
+    static var cacheDirectory: URL {
+        let cfg = WorkspacePeekConfig.current
+        let dir = WorkspacePeekConfig.url(forConfiguredPath: cfg.paths.screenshotCacheDirectory)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
-    }()
+    }
 
     // (Capture current screen and cache for the given workspace ID)
     static func captureAndCache(workspaceId: String) async {
         do {
-            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            guard let display = content.displays.first else { return }
+            let cfg = WorkspacePeekConfig.current
+            let capture = cfg.capture
+            let content = try await SCShareableContent.excludingDesktopWindows(
+                capture.excludingDesktopWindows,
+                onScreenWindowsOnly: capture.onScreenWindowsOnly
+            )
+            guard !content.displays.isEmpty else { return }
+            let index = min(max(capture.displayIndex, 0), content.displays.count - 1)
+            let display = content.displays[index]
+            let scaleDivisor = max(capture.imageScaleDivisor, 1)
 
             let config = SCStreamConfiguration()
-            config.width = Int(display.width / 3)
-            config.height = Int(display.height / 3)
-            config.showsCursor = false
+            config.width = Int(Double(display.width) / scaleDivisor)
+            config.height = Int(Double(display.height) / scaleDivisor)
+            config.showsCursor = capture.showsCursor
             config.captureResolution = .nominal
             config.pixelFormat = kCVPixelFormatType_32BGRA
 
@@ -34,7 +42,8 @@ final class WorkspaceCaptureEngine {
                 CGImageDestinationFinalize(dest)
             }
         } catch {
-            print("WorkspacePeek capture error: \(error)")
+            let cfg = WorkspacePeekConfig.current
+            print("\(cfg.logging.prefix) capture error: \(error)")
         }
     }
 

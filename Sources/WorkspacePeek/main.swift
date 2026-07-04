@@ -12,7 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isShowing = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        registerLoginItem()
+        let cfg = WorkspacePeekConfig.current
+        if cfg.loginItem.registerOnLaunch {
+            registerLoginItem()
+        }
 
         hotkey.onTrigger = { [weak self] in
             guard let self else { return }

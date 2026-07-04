@@ -3,7 +3,17 @@ import Foundation
 // Backend selector so WorkspacePeek can run w either rift or Aerospace.
 enum WindowManager {
 
-    static var useRift: Bool { isProcessRunning("rift") }
+    static var useRift: Bool {
+        let cfg = WorkspacePeekConfig.current.windowManager
+        switch cfg.backend.lowercased() {
+        case "rift":
+            return true
+        case "aerospace":
+            return false
+        default:
+            return isProcessRunning(cfg.riftProcessName)
+        }
+    }
 
     static func listWorkspaces() -> [Workspace] {
         useRift ? RiftClient.listWorkspaces() : AerospaceClient.listWorkspaces()
@@ -18,8 +28,9 @@ enum WindowManager {
     }
 
     private static func isProcessRunning(_ name: String) -> Bool {
+        let cfg = WorkspacePeekConfig.current.windowManager
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+        task.executableURL = URL(fileURLWithPath: WorkspacePeekConfig.expandPath(cfg.pgrepPath))
         task.arguments = ["-x", name]
         let pipe = Pipe()
         task.standardOutput = pipe

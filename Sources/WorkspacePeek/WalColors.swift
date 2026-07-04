@@ -15,17 +15,16 @@ struct WalColors {
     let color13: NSColor
     let color15: NSColor
 
-    var sbFocusedBubbleBG: NSColor { color13 }
-    var sbUnfocusedBubbleBG: NSColor { color8 }
-    var sbFocusedGlyph: NSColor { background }
-    var sbUnfocusedGlyph: NSColor { color15 }
-
     static var current: WalColors {
-        load() ?? fallback
+        let cfg = WorkspacePeekConfig.current
+        if cfg.colors.useWalColors, let colors = load(path: cfg.colors.walColorsPath) {
+            return colors
+        }
+        return fallback(from: cfg.colors.fallback)
     }
 
-    static func load() -> WalColors? {
-        let path = NSString(string: "~/.cache/wal/colors.json").expandingTildeInPath
+    static func load(path configuredPath: String) -> WalColors? {
+        let path = WorkspacePeekConfig.expandPath(configuredPath)
         guard
             let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
             let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -56,23 +55,42 @@ struct WalColors {
         )
     }
 
-    static var fallback: WalColors {
-        let fg = NSColor(hex: "#f2c4e1") ?? .white
+    static func fallback(from palette: ColorPalette) -> WalColors {
+        let fg = NSColor(hex: palette.foreground) ?? .white
         return WalColors(
-            background: NSColor(hex: "#280d2a") ?? .black,
+            background: NSColor(hex: palette.background) ?? .black,
             foreground: fg,
-            color0: NSColor(hex: "#280d2a") ?? .black,
-            color1: NSColor(hex: "#642c66") ?? .red,
-            color2: NSColor(hex: "#6d346e") ?? .green,
-            color3: NSColor(hex: "#744271") ?? .yellow,
-            color4: NSColor(hex: "#804482") ?? .blue,
-            color5: NSColor(hex: "#8e568c") ?? .magenta,
-            color6: NSColor(hex: "#9c5f9d") ?? .cyan,
-            color7: fg,
-            color8: NSColor(hex: "#541f57") ?? .gray,
-            color13: NSColor(hex: "#aa80a8") ?? .magenta,
-            color15: fg
+            color0: NSColor(hex: palette.color0) ?? .black,
+            color1: NSColor(hex: palette.color1) ?? .red,
+            color2: NSColor(hex: palette.color2) ?? .green,
+            color3: NSColor(hex: palette.color3) ?? .yellow,
+            color4: NSColor(hex: palette.color4) ?? .blue,
+            color5: NSColor(hex: palette.color5) ?? .magenta,
+            color6: NSColor(hex: palette.color6) ?? .cyan,
+            color7: NSColor(hex: palette.color7) ?? fg,
+            color8: NSColor(hex: palette.color8) ?? .gray,
+            color13: NSColor(hex: palette.color13) ?? .magenta,
+            color15: NSColor(hex: palette.color15) ?? fg
         )
+    }
+
+    func color(named name: String) -> NSColor {
+        switch name {
+        case "background": return background
+        case "foreground": return foreground
+        case "color0": return color0
+        case "color1": return color1
+        case "color2": return color2
+        case "color3": return color3
+        case "color4": return color4
+        case "color5": return color5
+        case "color6": return color6
+        case "color7": return color7
+        case "color8": return color8
+        case "color13": return color13
+        case "color15": return color15
+        default: return foreground
+        }
     }
 }
 

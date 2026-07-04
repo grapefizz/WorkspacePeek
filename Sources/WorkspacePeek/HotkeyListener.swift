@@ -7,9 +7,6 @@ final class HotkeyListener {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
-    private let triggerKeyCode: CGKeyCode = 0x0D  // kVK_ANSI_W
-    private let triggerModifiers: CGEventFlags = [.maskAlternate]  // Option
-
     func start() {
         let mask: CGEventMask =
             (1 << CGEventType.keyDown.rawValue)
@@ -28,7 +25,8 @@ final class HotkeyListener {
         )
 
         guard let tap else {
-            print("WorkspacePeek: could not create event tap - check Accessibility permission")
+            let cfg = WorkspacePeekConfig.current
+            print("\(cfg.logging.prefix): could not create event tap - check Accessibility permission")
             return
         }
 
@@ -54,12 +52,14 @@ final class HotkeyListener {
         }
         guard type == .keyDown else { return Unmanaged.passRetained(event) }
 
+        let cfg = WorkspacePeekConfig.current.hotkey
+        guard let triggerKeyCode = cfg.triggerKeyCode else { return Unmanaged.passRetained(event) }
         let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags.intersection([.maskAlternate, .maskCommand, .maskControl, .maskShift])
 
-        if keyCode == triggerKeyCode && flags == triggerModifiers {
+        if keyCode == triggerKeyCode && flags == cfg.modifierFlags {
             DispatchQueue.main.async { self.onTrigger?() }
-            return nil  // consume the event
+            return cfg.consumeEvent ? nil : Unmanaged.passRetained(event)
         }
         return Unmanaged.passRetained(event)
     }
