@@ -1,6 +1,6 @@
 # WorkspacePeek
 
-<img width="952" height="224" alt="Screenshot 2026-07-03 at 5 06 18 PM" src="https://github.com/user-attachments/assets/7d2d4121-12af-498a-9613-54b340a8f45a" />
+<img width="952" height="224" alt="Screenshot 2026-07-03 at 5 06 18 PM" src="https://github.com/user-attachments/assets/0f5f89a5-911f-4430-9b50-37a455fc549f" />
 
 Transparent pywal-coloured workspace switcher HUD for macOS WMs (**Aerospace** and **rift**) built with Swift. Primarily made for macOS Sequoia 15.7.7, but I've also tested it working on macOS 26 (Tahoe). It'll auto-detect either of those two choices at runtime. 
 
